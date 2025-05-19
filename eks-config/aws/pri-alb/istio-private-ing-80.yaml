@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-private-ing-80
+  namespace: istio-system
+  annotations:
+    alb.ingress.kubernetes.io/actions.redirect-to-mo: {"Type":"redirect","RedirectConfig":{"Host":"mbw.test.com","Path":"\/#{path}","Port":"443","Protocol":"HTTPS","Query":"#{query}","StatusCode":"HTTP_301"}}
+    alb.ingress.kubernetes.io/conditions.redirect-to-mo: [{"Field":"host-header","HostHeaderConfig":{"Values":["pcw.test.com"]}},{"Field":"http-header","HttpHeaderConfig":{"HttpHeaderName":"User-Agent","Values":["*Mobi*"]}}]      
+    alb.ingress.kubernetes.io/group.name: aim-prd-pri-alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/load-balancer-name: aim-prd-pri-alb-9
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/security-groups: sg-088df68a2ebfc4511 , sg-0e8e28832b64f65c9
+    alb.ingress.kubernetes.io/subnets: subnet-0dd41d5a5b3352f2d , subnet-043f63e8efc687b85 , subnet-0ffa99f3d79f15751
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.k8s.io/ingress.group: pri-group-9
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=aim-prd-pri-private-alb-logs-s3
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: redirect-to-mo
+            port:
+              name: use-annotation
+        path: /
+        pathType: Prefix          
+    - host: mbw.test.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: istio-ingressgateway
+                port:
+                  number: 80
+
+
+
+

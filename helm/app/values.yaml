@@ -1,0 +1,64 @@
+application:
+  name: x2bee-bo
+  build_number: 1
+  namespace: aim-app
+  containers:
+    image: docker.inner-test.com/aim-backend/x2bee-bo_dev:latest
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 600m
+      limits:
+        memory: 1000Mi
+        cpu: 1200m
+    replicas:
+      min: 1
+      max: 1
+  probe:
+    readinessProbe:
+      isUse: True
+      httpGet:
+        path: /actuator/health/readiness
+      initialDelaySeconds: 30
+    livenessProbe:
+      isUse: True
+      httpGet:
+        path: /actuator/health/liveness
+      initialDelaySeconds: 300
+  destinationRule:
+    trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 25
+        http:
+          http1MaxPendingRequests: 1024
+          maxRequestsPerConnection: 100
+      isCustomUse: True
+      loadBalancer:
+        simple: LEAST_CONN
+  virtualService:
+    http:
+      timeout: 60s
+
+service:
+  app:
+    domain: bow-dev.inner-test.com
+    contextPath: /
+    port: 80
+    targetPort: 9022
+    profile: dev
+
+gateway:
+  name: aim-inner-test-gw
+  namespace: aim-gateway
+  host: "*.inner-test.com"
+    
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-group
+          operator: In
+          values:
+          - app  

@@ -1,0 +1,14 @@
+# Default values for db-service
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: aim-mgmt
+replicas: 1
+elasticsearch:
+  url: "https://vpc-aim-prd-pri-es-qhprfi2wff4elrackzerdo6k44.ap-northeast-2.es.amazonaws.com"
+  host: vpc-aim-prd-pri-es-qhprfi2wff4elrackzerdo6k44.ap-northeast-2.es.amazonaws.com
+  port: 443
+profiles:
+  active: "prd"
+nodeSelector:
+  key: node-group
+  value: mgmt

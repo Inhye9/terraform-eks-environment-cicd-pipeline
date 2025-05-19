@@ -1,14 +1,14 @@
 region          = "ap-northeast-2"
 
-profile         = "<profile>"
+profile         = "2244615"
 
-project_name    = "<project_name>"
+project_name    = "aim"
 
 env             = "test"   
 
 eks_version     = "1.31"
 
-vpc_id          = "<vpc_id>"  
+vpc_id          = "vpc-0fb7538ad505f24d8"  
 
 //eks_additional_sg_ids  = []
 

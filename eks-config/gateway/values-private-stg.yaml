@@ -1,0 +1,20 @@
+# Default values for dev.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+gateway:
+  name: aim-inner-thehandsome-gw
+  namespace: aim-gateway
+  host:
+    -  "bow-stg.inner-test.com"
+    -  "ccw-stg.inner-test.com"
+    -  "gw-stg.inner-test.com"
+    -  "api-member-stg.inner-test.com"
+    -  "api-goods-stg.inner-test.com"
+    -  "api-display-stg.inner-test.com"
+    -  "api-event-stg.inner-test.com"
+    -  "api-common-stg.inner-test.com"
+    -  "api-order-stg.inner-test.com"
+    -  "api-bo-stg.inner-test.com"
+    -  "batch-mbod-stg.inner-test.com"
+    -  "batch-gddp-stg.inner-test.com"

@@ -1,0 +1,31 @@
+FROM docker.inner-test.com/library/node:16.13.0-v3
+
+USER root
+
+# Create app directory
+WORKDIR /app
+
+# Create user 
+RUN addgroup --gid 2000 appuser && \
+    useradd -d /app -s /bin/bash -g appuser -G root -p '!' -u 2000 appuser && \
+    chown -R appuser:appuser /app 
+
+# COPY app directory
+ADD --chown=appuser:appuser . /app/
+
+ARG START_PROFILE
+ENV START_PROFILE ${START_PROFILE}
+
+# isms 조치 
+COPY plugins/isms/debian-linux-isms-v2.sh debian-linux-isms
+RUN sh debian-linux-isms && \
+    rm -rf debian-linux-isms
+
+# PORT 지정 
+ENV HOST 0.0.0.0
+EXPOSE 80
+
+USER appuser
+
+# start command
+CMD npm run ${START_PROFILE}

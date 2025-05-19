@@ -1,0 +1,110 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aim-efs-sc-istio
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-6eff6b0e
+  directoryPerms: "700"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aim-ebs-sc-istio
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: istio-grafana-data-pvc
+  namespace: istio-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: aim-efs-sc-istio
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: istio-jaeger-data-pv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  csi:
+    driver: ebs.csi.aws.com
+    fsType: ext4
+    volumeHandle: vol-0f604e035e9f31c7d
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.ebs.csi.aws.com/zone
+              operator: In
+              values:
+                - ap-northeast-2b
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: aim-ebs-sc-istio
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: istio-jaeger-data-pvc
+  namespace: istio-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: aim-ebs-sc-istio
+  volumeMode: Filesystem
+  volumeName: istio-jaeger-data-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: istio-prometheus-data-pv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  csi:
+    driver: ebs.csi.aws.com
+    fsType: ext4
+    volumeHandle: vol-044985ae047874b10
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.ebs.csi.aws.com/zone
+              operator: In
+              values:
+                - ap-northeast-2b
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: aim-ebs-sc-istio
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: istio-prometheus-data-pvc
+  namespace: istio-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: aim-ebs-sc-istio
+  volumeMode: Filesystem
+  volumeName: istio-prometheus-data-pv

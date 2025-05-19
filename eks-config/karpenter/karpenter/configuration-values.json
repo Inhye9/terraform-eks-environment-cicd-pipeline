@@ -1,0 +1,7 @@
+{
+   "controller": {
+      "nodeSelector":{
+         "node-group": "mgmt"
+      }
+   }
+}

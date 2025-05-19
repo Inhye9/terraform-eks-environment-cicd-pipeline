@@ -1,0 +1,169 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.application.name }}-deploy
+  namespace: {{ .Values.application.namespace }}
+  labels:
+    alias: {{ .Values.application.name }}-pod
+    app: {{ .Values.application.name }}
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.application.name }}
+      version: v1
+  replicas: {{ .Values.application.containers.replicas.min }}
+  minReadySeconds: {{ .Values.application.minReadySeconds }}
+  revisionHistoryLimit: 0
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.application.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.application.rollingUpdate.maxUnavailable }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.application.name }}
+        version: v1
+    spec:
+      containers:
+        - name: {{ .Values.application.name }}
+          image: {{ .Values.application.containers.image }}
+          {{ if .Values.application.securityContext }}
+          securityContext:
+            runAsUser: {{ .Values.application.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.application.securityContext.runAsGroup }}
+          {{ end }}
+          ports:
+            - name: service-port
+              containerPort: {{ .Values.service.app.targetPort }}
+          env:
+            - name: server.port
+              value: "{{ .Values.service.app.targetPort }}"
+            - name: spring.profiles.active
+              value: "{{ .Values.service.app.profile }}"
+            - name: spring.application.name
+              value: "{{ .Values.application.name }}"
+            - name: build_version
+              value: "{{ .Values.application.build_number }}"
+            {{ if .Values.whatap }}  
+            - name: NODE_IP
+              valueFrom: {fieldRef: {fieldPath: status.hostIP}}
+            - name: NODE_NAME
+              valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: OKIND
+              value: {{ .Values.application.name }}
+            - name: WHATAP_OKIND
+              value: {{ .Values.application.name }}
+            - name: license
+              value: {{ .Values.whatap.license }}
+            - name: whatap_server_host
+              value: "{{ .Values.whatap.server.host }}"
+            - name: whatap_micro_enabled
+              value: "{{ .Values.whatap.micro.enabled }}"
+            {{ end }}
+            {{ if .Values.secret.kms }}
+            - name: aws.kms.keyArn
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.name }}-aws-kms-secret
+                  key: keyArn
+            {{ end }}
+            {{ if .Values.secret.jasypt }}
+            - name: jasypt.encryptor.password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.name }}-jasypt-secret
+                  key: encryptorPassword
+            {{ end }}
+            {{ if .Values.secret.jwt }}
+            - name: jwt.service.key
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.name }}-jwt-secret
+                  key: serviceKey
+            - name: jwt.member.access.key
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.name }}-jwt-secret
+                  key: memberAccessKey
+            - name: jwt.member.refresh.key
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.name }}-jwt-secret
+                  key: memberRefreshKey
+            {{ end }}
+          resources:
+            requests:
+              memory: "{{ .Values.application.containers.resources.requests.memory }}"
+              cpu: "{{ .Values.application.containers.resources.requests.cpu }}"
+            limits:
+              memory: "{{ .Values.application.containers.resources.limits.memory }}"
+              cpu: "{{ .Values.application.containers.resources.limits.cpu }}"
+          {{ if .Values.application.probe.startupProbe }}
+          startupProbe:
+            httpGet:
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+              path: {{ .Values.application.probe.startupProbe.httpGet.path }}
+              port: {{ .Values.service.app.targetPort }}
+            initialDelaySeconds: {{ .Values.application.probe.startupProbe.initialDelaySeconds }}
+            timeoutSeconds: 1
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 120
+          {{ end }}
+          {{ if .Values.application.probe.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.application.probe.readinessProbe.httpGet.path }}
+              port: {{ .Values.service.app.targetPort }}
+            initialDelaySeconds: {{ .Values.application.probe.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          {{ end }}
+          {{ if .Values.application.probe.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.application.probe.livenessProbe.httpGet.path }}
+              port: {{ .Values.service.app.targetPort }}
+            initialDelaySeconds: {{ .Values.application.probe.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 30
+          {{ end }}
+          volumeMounts:
+          - mountPath: /etc/localtime
+            name: timezone-config
+      terminationGracePeriodSeconds: {{ .Values.application.terminationGracePeriodSeconds }}
+      volumes:
+      - hostPath:
+          path: /usr/share/zoneinfo/Asia/Seoul
+          type: ""
+        name: timezone-config
+      imagePullSecrets:
+        - name: {{ .Values.application.name }}-docker-secret
+      {{- if .Values.affinity }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: {{ .Values.application.name }}
+            version: v1
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: {{ .Values.application.name }}
+            version: v1

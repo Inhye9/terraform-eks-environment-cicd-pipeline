@@ -1,0 +1,84 @@
+application:
+  name: x2bee-api-goods
+  build_number: 1
+  namespace: aim-app
+  containers:
+    image: docker.inner-test.com/aim-backend/x2bee-api-goods_dev:latest
+    resources:
+      requests:
+        memory: 1536Mi
+        cpu: 500m
+      limits:
+        memory: 1536Mi
+        cpu: 1000m
+    replicas:
+      min: 1
+      max: 1
+    targetCPUUtilizationPercentage: 70
+  rollingUpdate:
+    maxSurge: 50%
+    maxUnavailable: 0%
+  probe:
+    startupProbe:
+      httpGet:
+        path: /api/goods/actuator/health
+      initialDelaySeconds: 120
+    readinessProbe:
+      httpGet:
+        path: /api/goods/actuator/health/readiness
+      initialDelaySeconds: 30
+    livenessProbe:
+      httpGet:
+        path: /api/goods/actuator/health/liveness
+      initialDelaySeconds: 60
+  destinationRule:
+    trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 25
+        http:
+          http1MaxPendingRequests: 1024
+          maxRequestsPerConnection: 100
+      isCustomUse: True
+      loadBalancer:
+        simple: LEAST_REQUEST
+  virtualService:
+    http:
+      timeout: 60s
+  terminationGracePeriodSeconds: 30
+  minReadySeconds: 0
+
+service:
+  app:
+    domain:
+      - api-goods-dev.inner-test.com
+    contextPath: /
+    port: 80
+    targetPort: 9022
+    profile: dev
+
+secret:
+  kms: true
+  jasypt: true
+  jwt: true
+
+gateway:
+  - name: aim-inner-test-gw
+    namespace: aim-gateway
+    
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-group
+          operator: In
+          values:
+          - app    
+          
+whatap:
+  license: x4qah20t66ed7-x7gk0qk504oon9-x7o2n9069004rs
+  server:
+    host: 13.124.11.223/13.209.172.35
+  micro:
+    enabled: true          

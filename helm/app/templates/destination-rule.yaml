@@ -1,0 +1,24 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ .Values.application.name }}-destination-rule
+  namespace: {{ .Values.application.namespace }}
+  labels:
+    app: {{ .Values.application.name }}
+spec:
+  host: {{ .Values.application.name }}-svc
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  {{ if .Values.application.destinationRule.trafficPolicy.isCustomUse }}
+  trafficPolicy:
+    loadBalancer:
+      simple: {{ .Values.application.destinationRule.trafficPolicy.loadBalancer.simple }}
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.application.destinationRule.trafficPolicy.connectionPool.tcp.maxConnections }}
+      http:
+        http1MaxPendingRequests: {{ .Values.application.destinationRule.trafficPolicy.connectionPool.http.http1MaxPendingRequests }}
+        maxRequestsPerConnection: {{ .Values.application.destinationRule.trafficPolicy.connectionPool.http.maxRequestsPerConnection }}
+  {{ end }}

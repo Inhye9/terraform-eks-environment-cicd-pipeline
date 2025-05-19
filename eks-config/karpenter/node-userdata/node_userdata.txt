@@ -1,0 +1,28 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="//"
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+#!/bin/bash
+
+ec2ip=$(ifconfig eth0 | grep -w inet | awk '{ print $2 }'  | tr '.' '-' )
+tagName="aim-prd-eks-cluster-front-app-"$ec2ip
+Instance_id=`curl -s http://169.254.169.254/latest/meta-data/instance-id/`
+vol_id=`aws ec2 describe-instances --instance-ids ${Instance_id} --region ap-northeast-2 --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' | sed 's/\"//g'`
+
+echo $(aws ec2  create-tags --resources ${Instance_id} --tags Key="Name",Value=$tagName  --region ap-northeast-2)
+echo $(aws ec2 create-tags --resources ${vol_id}  --tags Key=Name,Value=$tagName-root-ebs Key=Env,Value=prd Key=Service,Value=aim --region ap-northeast-2)
+
+aws s3 cp s3://aim-prd-pri-eks-userdata-s3/aim-prd-eks-userdata.sh /
+chmod 700 aim-prd-eks-userdata.sh
+./aim-prd-eks-userdata.sh > userdata-log-`date '+%Y%m%d'`.txt
+rm -rf aim-prd-eks-userdata.sh
+
+set -ex
+B64_CLUSTER_CA=LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJeU1ETXdOekEzTkRjeU1Wb1hEVE15TURNd05EQTNORGN5TVZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTi9xClBvUHhOR1hGLzNxZjdZRUR4eVVMdVp2ZDZwV2NPcWtPMElscjlmNzNnSnpBV0xJSlNqbFJkeEFPa2pXS2ljeW0KRVlRZzFRQUlUL015UkJnV1VWRmg5ZnptYkRLTFZBOEtpRUtOMVduWEFyOExGNEJWTG54YWRZMDBxSnRtYmtxQQpvc3V0Mmo3N3BmYnY1UEhNdWZsU1lLbHQzTStGWFRMT1BLNWFUR3lVcys3R2VxZ1BEa0l3RVN2bFh4aE1ON0NhCm5mczBRZjBaQkRvZDBHSzdwUDdNdGpPU0lJMm16akgydU82a1l4Sk1oUUhzMXkzRitGVTZJN1RibXZ3TDlvRFYKeUdHbThDcWFobXJZUlR2c3M3VlNEamVMSWdjWjJoR2orNUEvUGRSSDJ4SG5WNjYvRTA1bUdCM0hrUENIRHhNTgowQ2xyZjB1T3dCeXNJRDg0eFdFQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZLWk1SS3lIK0c5bFlhNEhkV2RtZ1Z5dGFGbWNNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFEWmZsZEh4azdRS0VVWk1CYTN4RTgraFJURHo2UXNBWWRhdTMrOGYrVlFDcHluc20zTApndHJ4SU5mcnIzcWc3c3hqalRWWTRoVnRPQWh5SUJkZHpUZlIxUGNsQkdvZDJhb3llRlhDamRRTUN3czNhQmYyCisrUzN0L3dpWVNuUGdFK1MzUjdaRENRZXpnT2VaUWEvUmE1TGp3ZkFld2hLMEQ2ZzZVTjhqZjdTbHB5WTQyMlgKdUk4ZUtjOXliQnNoV056RG15YUVnRDIvYlFTdGtKa3hKWGlqb1pQRCt1YklZamVnQ1dqOXdjSVlicFBqS0hOaQpUN1N4Ri9uOVBlbjdVMndreDgzbXJkWWplckNOK1RTbUdvYm1QeTRQMS9PRDk1U3FWVmVCcVJsdVNDL0R6aDZlCndyM3NmdlU4dkRvdm5KVkNPdlNTYllpNmRrSzdOVjJreTZ2bAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+API_SERVER_URL=https://5BFD835C862DFEE495ABC914A7F4ACF3.gr7.ap-northeast-2.eks.amazonaws.com
+K8S_CLUSTER_DNS_IP=172.20.0.10
+/etc/eks/bootstrap.sh aim-prd-eks-cluster --kubelet-extra-args '--node-labels=eks.amazonaws.com/nodegroup-image=ami-0f8ec68dd2f634010
+,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup=aim-prd-eks-front-ng,node-group=front' --b64-cluster-ca $B64_CLUSTER_CA --apiserver-endpoint $API_SERVER_URL --dns-cluster-ip $K8S_CLUSTER_DNS_IP
+
+--//--

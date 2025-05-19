@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
+    alb.ingress.kubernetes.io/healthcheck-port: "15021"
+    alb.ingress.kubernetes.io/target-group-attributes: load_balancing.algoriaim.type=least_outstanding_requests
+  creationTimestamp: "2022-05-23T04:50:08Z"
+  labels:
+    app: istio-ingressgateway
+    install.operator.istio.io/owning-resource: installed-state
+    install.operator.istio.io/owning-resource-namespace: istio-system
+    istio: ingressgateway
+    istio.io/rev: default
+    operator.istio.io/component: IngressGateways
+    operator.istio.io/managed: Reconcile
+    operator.istio.io/version: 1.22.1
+    release: istio
+  name: istio-ingressgateway
+  namespace: istio-system
+  resourceVersion: "235052958"
+  uid: 5bb61743-f483-4800-bbb6-4233ec95c95c
+spec:
+  clusterIP: 172.25.135.146
+  clusterIPs:
+  - 172.25.135.146
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: status-port
+    nodePort: 31339
+    port: 15021
+    protocol: TCP
+    targetPort: 15021
+  - name: http2
+    nodePort: 30752
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  - name: https
+    nodePort: 32544
+    port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: istio-ingressgateway
+    istio: ingressgateway
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

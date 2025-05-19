@@ -1,0 +1,139 @@
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: karpenter-nodetemplate-front
+  namespace: karpenter
+spec:
+  subnetSelector:
+    karpenter.sh/discovery/subnetselector: '*'
+  securityGroupSelector:
+    karpenter.sh/discovery/securitygroupselector-qa: '*'
+  instanceProfile: aim-prd-eks-cluster-node-role
+  amiSelector:
+    aws::ids: "ami-0985b5b254a2d8024"
+  tags:
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: optional
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 300Gi
+        volumeType: gp3
+        encrypted: false
+        deleteOnTermination: true
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="//"
+
+    --//
+    Content-Type: text/x-shellscript; charset="us-ascii"
+
+    #!/bin/bash
+    ec2ip=$(ifconfig eth0 | grep -w inet | awk '{ print $2 }'  | tr '.' '-' )
+    tagName="aim-qa-eks-cluster-front-"$ec2ip
+    Instance_id=`curl -s http://169.254.169.254/latest/meta-data/instance-id/`
+    vol_id=`aws ec2 describe-instances --instance-ids ${Instance_id} --region ap-northeast-2 --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' | sed 's/\"//g'`
+
+    echo $(aws ec2 create-tags --resources ${Instance_id} --tags Key="Name",Value=$tagName  --region ap-northeast-2)
+    echo $(aws ec2 create-tags --resources ${vol_id}  --tags Key=Name,Value=$tagName-root-ebs Key=Env,Value=qa Key=Service,Value=aim --region ap-northeast-2)
+
+    /opt/ds_agent/dsa_control -r
+    #/opt/ds_agent/dsa_control -a dsm://10.217.249.50:4120/
+    --//--
+
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: karpenter-nodetemplate-app
+  namespace: karpenter
+spec:
+  subnetSelector:
+    karpenter.sh/discovery/subnetselector: '*'
+  securityGroupSelector:
+    karpenter.sh/discovery/securitygroupselector-qa: '*'
+  instanceProfile: aim-prd-eks-cluster-node-role
+  amiSelector:
+    aws::ids: "ami-0985b5b254a2d8024"
+  tags:
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: optional
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 100Gi
+        volumeType: gp3
+        encrypted: false
+        deleteOnTermination: true
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="//"
+
+    --//
+    Content-Type: text/x-shellscript; charset="us-ascii"
+
+    #!/bin/bash
+    ec2ip=$(ifconfig eth0 | grep -w inet | awk '{ print $2 }'  | tr '.' '-' )
+    tagName="aim-qa-eks-cluster-app-"$ec2ip
+    Instance_id=`curl -s http://169.254.169.254/latest/meta-data/instance-id/`
+    vol_id=`aws ec2 describe-instances --instance-ids ${Instance_id} --region ap-northeast-2 --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' | sed 's/\"//g'`
+
+    echo $(aws ec2 create-tags --resources ${Instance_id} --tags Key="Name",Value=$tagName  --region ap-northeast-2)
+    echo $(aws ec2 create-tags --resources ${vol_id}  --tags Key=Name,Value=$tagName-root-ebs Key=Env,Value=qa Key=Service,Value=aim --region ap-northeast-2)
+
+    /opt/ds_agent/dsa_control -r
+    #/opt/ds_agent/dsa_control -a dsm://10.217.249.50:4120/
+    --//--
+
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: karpenter-nodetemplate-batch
+  namespace: karpenter
+spec:
+  subnetSelector:
+    karpenter.sh/discovery/subnetselector: '*'
+  securityGroupSelector:
+    karpenter.sh/discovery/securitygroupselector-qa: '*'
+  instanceProfile: aim-prd-eks-cluster-node-role
+  amiSelector:
+    aws::ids: "ami-0985b5b254a2d8024"
+  tags:
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: optional
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 100Gi
+        volumeType: gp3
+        encrypted: false
+        deleteOnTermination: true
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="//"
+
+    --//
+    Content-Type: text/x-shellscript; charset="utf8"
+
+    #!/bin/bash
+    ec2ip=$(ifconfig eth0 | grep -w inet | awk '{ print $2 }'  | tr '.' '-' )
+    tagName="aim-qa-eks-cluster-batch-"$ec2ip
+    Instance_id=`curl -s http://169.254.169.254/latest/meta-data/instance-id/`
+    vol_id=`aws ec2 describe-instances --instance-ids ${Instance_id} --region ap-northeast-2 --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' | sed 's/\"//g'`
+
+    echo $(aws ec2 create-tags --resources ${Instance_id} --tags Key="Name",Value=$tagName  --region ap-northeast-2)
+    echo $(aws ec2 create-tags --resources ${vol_id}  --tags Key=Name,Value=$tagName-root-ebs Key=Env,Value=qa Key=Service,Value=aim --region ap-northeast-2)
+
+    /opt/ds_agent/dsa_control -r
+    #/opt/ds_agent/dsa_control -a dsm://10.217.249.50:4120/
+    --//--

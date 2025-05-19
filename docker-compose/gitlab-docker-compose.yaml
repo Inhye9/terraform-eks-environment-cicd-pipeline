@@ -1,0 +1,12 @@
+web:
+  #image: docker.inner-test.com/library/gitlab:14.2.3-ce.0
+  image: 'gitlab/gitlab-ce:14.2.3-ce.0'
+  restart: always
+  hostname: 'gitlab.inner-test.com'
+  container_name: gitlab
+  ports:
+    - '8001:80'
+  volumes:
+    - '/apps/gitlab/config:/etc/gitlab'
+    - '/apps/gitlab/logs:/var/log/gitlab'
+    - '/apps/gitlab/data:/var/opt/gitlab'

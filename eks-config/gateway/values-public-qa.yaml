@@ -1,0 +1,15 @@
+# Default values for dev.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+gateway:
+  name: aim-thehandsome-gw
+  namespace: aim-gateway
+  host:
+    -  "pcw-qa.test.com"
+    -  "enpcw-qa.test.com"
+    -  "mbw-qa.test.com"
+    -  "enmbw-qa.test.com"
+    -  "ccw-qa.test.com"
+    -  "pow-qa.test.com"
+    -  "inf-qa.test.com"

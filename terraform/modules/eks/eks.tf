@@ -20,7 +20,8 @@ module "eks" {
   cluster_version                = var.eks_version
   cluster_upgrade_policy         = { support_type = "STANDARD" }
   cluster_service_ipv4_cidr      = "172.20.0.0/16"
-  cluster_endpoint_public_access = false
+  cluster_endpoint_public_access = false  
+  //cluster_endpoint_public_access = true 
   authentication_mode            = "API"
   
   vpc_id                         = var.vpc_id

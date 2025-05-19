@@ -1,0 +1,25 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  annotations:
+    elbv2.k8s.aws/checkpoint: -dWArkxCHEhuUCVfgczASdLea4iKXoz6V8MyM2OPUuE/iuIWqJjgobqqsqpbFYeHjilLcxGWqPFgcjmHal8BkzI
+    elbv2.k8s.aws/checkpoint-timestamp: "1739780691"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"elbv2.k8s.aws/v1beta1","kind":"TargetGroupBinding","metadata":{"annotations":{},"name":"aim-dev-k8s-istio-pri-tgbinding","namespace":"istio-system"},"spec":{"serviceRef":{"name":"istio-ingressgateway","port":80},"targetGroupARN":"arn:aws:elasticloadbalancing:ap-northeast-2:934563315680:targetgroup/aim-dev-k8s-istio-pri-tg/92834a35edab6635","targetType":"ip"}}
+  creationTimestamp: "2025-02-17T08:24:50Z"
+  finalizers:
+  - elbv2.k8s.aws/resources
+  generation: 1
+  name: aim-dev-k8s-istio-pri-tgbinding
+  namespace: istio-system
+  resourceVersion: "1819031"
+  uid: 7570171c-b17d-43d2-b92f-d6e7c0ff036f
+spec:
+  ipAddressType: ipv4
+  serviceRef:
+    name: istio-ingressgateway
+    port: 80
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:934563315680:targetgroup/aim-dev-k8s-istio-pri-tg/92834a35edab6635
+  targetType: ip
+status:
+  observedGeneration: 1

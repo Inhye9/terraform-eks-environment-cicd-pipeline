@@ -1,0 +1,170 @@
+def props
+def oGroovy
+
+pipeline {
+
+    agent any
+
+    environment{
+        // ------------------------------------------------
+        // env.JOB_NAME = aim-app_test
+        // ------------------------------------------------
+        // JOB_NAME_ARR = [aim-app, test]
+        //
+        // PRJ_TARGET = test     -> JOB_NAME_ARR[1]
+        // PRJ_NAME = aim-app    -> JOB_NAME_ARR[0]
+        // ------------------------------------------------
+
+        JOB_NAME_ARR = "${env.JOB_NAME}".split('_')
+
+        PRJ_NAME    = "${JOB_NAME_ARR[0]}"      // aim-app
+        PRJ_TARGET  = "${JOB_NAME_ARR[1]}"      // test
+
+        props = readProperties file:"scm/scm_scripts/${PRJ_NAME}.properties"
+        // ------------------------------------------------
+
+        // Run Profile Setting
+        GIT_APP_REPOS       = "${props['GIT_APP_REPOS']}"
+        GIT_CREDENTIALS_ID  = "${props['GIT_CREDENTIALS_ID']}"
+
+        // properties for JAVA_OPS
+        JAVA_OPS_DEV     = "${props['JAVA_OPS_DEV']}"
+        JAVA_OPS_STG     = "${props['JAVA_OPS_STG']}"
+        JAVA_OPS_QA      = "${props['JAVA_OPS_QA']}"
+        JAVA_OPS_PRD     = "${props['JAVA_OPS_PRD']}"
+
+        // properties for docker
+        DOCKER_REPO_URL = "${props['DOCKER_REPO_URL']}"
+        DOCKER_IMAGE_NAME_DEV = "${props['DOCKER_IMAGE_NAME_DEV']}"
+        DOCKER_IMAGE_NAME_STG = "${props['DOCKER_IMAGE_NAME_STG']}"
+        DOCKER_IMAGE_NAME_QA  = "${props['DOCKER_IMAGE_NAME_QA']}"
+        DOCKER_IMAGE_NAME_PRD = "${props['DOCKER_IMAGE_NAME_PRD']}"
+        DOCKER_REPO_CREDENTIALS_ID = "${props['DOCKER_REPO_CREDENTIALS_ID']}"
+
+        APP_NAME        = "${PRJ_NAME}"
+
+        MVN_COMMAND = "${props['MVN_COMMAND']}"
+        MVN_PACKAGING_FORMAT = "${props['MVN_PACKAGING_FORMAT']}"
+
+        S3_UTIL_CMD     = "${props['S3_UTIL_CMD']}"
+        S3_SOURCE_DIRS = "${props['S3_SOURCE_DIRS']}"
+        S3_DELETE_CACHE_PATH = "${props['S3_DELETE_CACHE_PATH']}"
+
+		S3_NUXT_SOURCE_DIRS	= "${props['S3_NUXT_SOURCE_DIRS']}"
+		S3_NUXT_KEY= "${props['S3_NUXT_KEY']}"
+
+        S3_BUCKET_NAME_DEV = "${props['S3_BUCKET_NAME_DEV']}"
+        S3_KEY_DEV = "${props['S3_KEY_DEV']}"
+        S3_CACHE_DIST_ID_DEV = "${props['S3_CACHE_DIST_ID_DEV']}"
+
+        S3_BUCKET_NAME_STG = "${props['S3_BUCKET_NAME_STG']}"
+        S3_KEY_STG = "${props['S3_KEY_STG']}"
+        S3_CACHE_DIST_ID_STG = "${props['S3_CACHE_DIST_ID_STG']}"
+
+        S3_BUCKET_NAME_QA = "${props['S3_BUCKET_NAME_QA']}"
+        S3_KEY_QA = "${props['S3_KEY_QA']}"
+        S3_CACHE_DIST_ID_QA = "${props['S3_CACHE_DIST_ID_QA']}"
+
+        S3_BUCKET_NAME_PRD = "${props['S3_BUCKET_NAME_PRD']}"
+        S3_KEY_PRD = "${props['S3_KEY_PRD']}"
+        S3_CACHE_DIST_ID_PRD = "${props['S3_CACHE_DIST_ID_PRD']}"
+
+		ARGOCD_SYNC_CMD = "${props['ARGOCD_SYNC_CMD']}"
+		ARGOCD_CREDENTIALS_ID = "${props['ARGOCD_CREDENTIALS_ID']}"
+
+        ENABLE_S3_UPLOAD_YN = "${props['ENABLE_S3_UPLOAD_YN']}"
+        ENABLE_S3_NUXT_UPLOAD_YN = "${props['ENABLE_S3_NUXT_UPLOAD_YN']}"
+        ENABLE_S3_CACHE_YN = "${props['ENABLE_S3_CACHE_YN']}"
+        ENABLE_BUILD_YN = "${props['ENABLE_BUILD_YN']}"
+        ENABLE_BUILD_NODE_YN = "${props['ENABLE_BUILD_NODE_YN']}"
+        ENABLE_DOCKER_YN = "${props['ENABLE_DOCKER_YN']}"
+        ENABLE_DOCKER_NODE_YN = "${props['ENABLE_DOCKER_NODE_YN']}"
+        ENABLE_DEPLOY_YN = "${props['ENABLE_DEPLOY_YN']}"
+    }
+
+    stages {
+        // =================================================================================
+        stage('Prepare') {
+            steps{
+                script {
+                    switch("${PRJ_TARGET}"){
+                        case "dev":
+                            JAVA_OPS                = "${JAVA_OPS_DEV}"
+                            GIT_BRANCH              = "*/develop"
+                            S3_BUCKET_NAME          = "${S3_BUCKET_NAME_DEV}"
+                            S3_KEY                  = "${S3_KEY_DEV}"
+                            S3_CACHE_DIST_ID        = "${S3_CACHE_DIST_ID_DEV}"
+                            DOCKER_IMAGE_NAME       = "${DOCKER_IMAGE_NAME_DEV}"
+                            BUILD_PROFILE           = "build:dev"
+                            START_PROFILE           = "start:dev"
+                            break
+                        case "stg":
+                            JAVA_OPS                = "${JAVA_OPS_STG}"
+                            GIT_BRANCH 				= "${params.BRANCH}"
+                            S3_BUCKET_NAME          = "${S3_BUCKET_NAME_STG}"
+                            S3_KEY                  = "${S3_KEY_STG}"
+                            S3_CACHE_DIST_ID        = "${S3_CACHE_DIST_ID_STG}"
+                            DOCKER_IMAGE_NAME       = "${DOCKER_IMAGE_NAME_STG}"
+                            BUILD_PROFILE           = "build:stage"
+                            START_PROFILE           = "start:stage"
+                            break
+                        case "qa":
+                            JAVA_OPS                = "${JAVA_OPS_QA}"
+                            
+                            if("${params.TAG}".startsWith("DP_")){
+                            	GIT_BRANCH              = "refs/tags/${params.TAG}"
+                            }else{
+                            	GIT_BRANCH 				= "${params.TAG}"
+                            }
+                            
+                            S3_BUCKET_NAME          = "${S3_BUCKET_NAME_QA}"
+                            S3_KEY                  = "${S3_KEY_QA}"
+                            S3_CACHE_DIST_ID        = "${S3_CACHE_DIST_ID_QA}"
+                            DOCKER_IMAGE_NAME       = "${DOCKER_IMAGE_NAME_QA}"
+                            BUILD_PROFILE           = "build:qa"
+                            START_PROFILE           = "start:qa"
+                            break
+                        case "prd":
+                            JAVA_OPS                = "${JAVA_OPS_PRD}"
+                            GIT_BRANCH              = "refs/tags/${params.TAG}"
+                            S3_BUCKET_NAME          = "${S3_BUCKET_NAME_PRD}"
+                            S3_KEY                  = "${S3_KEY_PRD}"
+                            S3_CACHE_DIST_ID        = "${S3_CACHE_DIST_ID_PRD}"
+                            DOCKER_IMAGE_NAME       = "${DOCKER_IMAGE_NAME_PRD}"
+                            BUILD_PROFILE           = "build:prod"
+                            START_PROFILE           = "start:prod"
+                            break
+                    }
+                    
+                    if(GIT_BRANCH == "refs/tags/" && PRJ_TARGET == "prd") {
+                        GIT_BRANCH = "*/main"
+                    }
+
+                    if(GIT_BRANCH == "refs/tags/" && PRJ_TARGET == "qa") {
+                        GIT_BRANCH = "*/qa"
+                    }
+
+                    switch("${PRJ_NAME}"){
+                        case "x2bee-common":
+                            GIT_BRANCH = "${params.BRANCH}"
+                            break
+
+                        case "aim-bo-publish":
+                            GIT_BRANCH = "*/main"
+                            break
+                    }
+
+                    sh """#!/bin/bash
+                        mkdir -p project
+                        """
+
+                    oGroovy = load "scm/pipeline/pipeline.groovy"
+
+                    //oGroovy.printEnvs()
+
+                    oGroovy.build()
+                }
+            }
+        }
+     }
+}

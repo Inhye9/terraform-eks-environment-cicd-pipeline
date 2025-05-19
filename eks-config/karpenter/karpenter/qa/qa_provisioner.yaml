@@ -1,0 +1,88 @@
+#front
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenter-provisioner-front
+spec:
+  providerRef:
+    name: karpenter-nodetemplate-front
+  requirements:
+    - key: "node.kubernetes.io/instance-type"
+      operator: In
+      values: ["m5.2xlarge"] # 8core/32mem
+    - key: "topology.kubernetes.io/zone"
+      operator: In
+      values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["on-demand"]
+  labels:
+    node-group: front
+  limits:
+    resources:
+      cpu: "400"
+      memory: 1600Gi
+  consolidation:
+    enabled: false
+  ttlSecondsUntilExpired: 604800
+  ttlSecondsAfterEmpty: 180
+
+#app
+--- 
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenter-provisioner-app
+spec:
+  providerRef:
+    name: karpenter-nodetemplate-app
+  requirements:
+    - key: "node.kubernetes.io/instance-type"
+      operator: In
+      values: ["m5.2xlarge"] # 8core/32mem
+    - key: "topology.kubernetes.io/zone"
+      operator: In
+      values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["on-demand"]
+  labels:
+    node-group: app
+  limits:
+    resources:
+      cpu: "800"
+      memory: 3200Gi
+  consolidation:
+    enabled: false
+  ttlSecondsUntilExpired: 604800
+  ttlSecondsAfterEmpty: 180
+
+#batch
+--- 
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenter-provisioner-batch
+spec:
+  providerRef:
+    name: karpenter-nodetemplate-batch
+  requirements:
+    - key: "node.kubernetes.io/instance-type"
+      operator: In
+      values: ["c5.xlarge"] # 4core/8mem
+    - key: "topology.kubernetes.io/zone"
+      operator: In
+      values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["on-demand"]
+  labels:
+    node-group: batch
+  limits:
+    resources:
+      cpu: "100"
+      memory: 200Gi
+  consolidation:
+    enabled: false
+  ttlSecondsUntilExpired: 604800
+  ttlSecondsAfterEmpty: 180

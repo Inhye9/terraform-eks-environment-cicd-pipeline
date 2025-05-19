@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.application.name }}-vs
+  namespace: {{ .Values.application.namespace }}
+  labels:
+    app: {{ .Values.application.name }}
+spec:
+  hosts:
+  {{- range .Values.service.app.domain }}
+  - {{.}}{{- end }}
+  gateways:
+  {{- range $key, $val := .Values.gateway }}
+  - {{ $val.namespace }}/{{ $val.name }}{{- end }}
+  http:
+  - name: "{{ .Values.application.name }}-http"
+    {{ if ne .Values.service.app.contextPath "/" }}
+    match:
+      - uri:
+          prefix: "{{ .Values.service.app.contextPath }}"
+    {{ end }}
+    route:
+    - destination:
+        host: {{ .Values.application.name }}-svc
+        subset: v1
+    timeout: {{ .Values.application.virtualService.http.timeout }}
+    retries:
+      attempts: 0
