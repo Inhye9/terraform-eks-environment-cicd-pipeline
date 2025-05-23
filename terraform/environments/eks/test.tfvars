@@ -8,7 +8,7 @@ env             = "test"
 
 eks_version     = "1.31"
 
-vpc_id          = "vpc-0fb7538ad505f24d8"  
+vpc_id          = "vpc-00712c7222a396d8e"  
 
 //eks_additional_sg_ids  = []
 
