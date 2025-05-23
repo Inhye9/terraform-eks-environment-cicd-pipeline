@@ -32,7 +32,10 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(local.common_tags,{
-    Name = "${var.instance_name}-sg"
-  })
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.instance_name}-sg"
+    }
+  )
 }

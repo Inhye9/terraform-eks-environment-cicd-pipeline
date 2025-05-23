@@ -1,66 +1,46 @@
-provider "aws" {
-  region = var.region
-}
+resource "aws_security_group" "ec2_sg" {
+  name        = "${var.instance_name}-sg"
+  description = "Security group for EC2 instances"
+  vpc_id      = var.vpc_id
 
-
-# ------------------------------------------------------------------------
-# Tag
-# ------------------------------------------------------------------------
-locals {
-  common_tags = {
-    CreatedBy = "Terraform"
-    Group     = "${var.instance_name}-group"
-  }
-}
-
-
-# EC2 인스턴스 생성
-resource "aws_instance" "ec2" {
-  ami                     = data.aws_ami.amazon_linux.id
-  instance_type           = var.instance_type
-  key_name                = var.key_pair_name
-  subnet_id               = var.subnet_id
-  #security_groups_ids = [aws_security_group.jenkins_sg.id]
-  vpc_security_group_ids  = [aws_security_group.sg.id]
-  iam_instance_profile    = var.instance_profile_role
-
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo yum update -y
-              sudo yum install docker -y
-
-              # 4. docker-compose 설치
-              sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/bin/docker-compose
-              sudo chmod +x /usr/bin/docker-compose
-              sudo docker-compose -v
-
-              ## Start Docker service
-              sudo systemctl start docker
-              sudo systemctl enable docker
-              EOF
-
-  # public ip 할당 허용
-  associate_public_ip_address = true
-
-  tags = merge(local.common_tags,{
-    Name = "${var.instance_name}"
-  })
-}
-
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  dynamic "ingress" {
+    for_each = var.ingress_rules
+    content {
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+    }
   }
 
-  filter {
-    name   = "owner-id"
-    values = ["137112412989"] # Amazon
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.instance_name}-sg"
+    }
+  )
 }
 
-output instance_id {
-  value = aws_instance.ec2.id
+resource "aws_instance" "app" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  //subnet_id              = var.subnet_ids[0]
+  subnet_id              = var.subnet_id
+
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.instance_name}"
+    }
+  )
 }
