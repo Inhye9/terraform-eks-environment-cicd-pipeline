@@ -1,0 +1,17 @@
+releases:
+  - name: istio-base
+    namespace: istio-system
+    chart: istio/base
+    version: 1.20.3
+    createNamespace: true
+    wait: true
+    
+  - name: istiod
+    namespace: istio-system
+    chart: istio/istiod
+    version: 1.20.3
+    wait: true
+    needs:
+      - istio-system/istio-base
+    values:
+      - ../values/istio-values.yaml

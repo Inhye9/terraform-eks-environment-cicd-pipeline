@@ -1,0 +1,7 @@
+releases:
+  - name: aws-load-balancer-controller
+    namespace: kube-system
+    chart: eks/aws-load-balancer-controller
+    version: 1.6.2
+    values:
+      - ../values/lb-controller-values.yaml

@@ -1,0 +1,21 @@
+service:
+  type: ClusterIP
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+tolerations:
+  - key: "node-role.kubernetes.io/management"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+env:
+  - name: FLUENT_ELASTICSEARCH_HOST
+    value: "elasticsearch-master.logging.svc.cluster.local"
+  - name: FLUENT_ELASTICSEARCH_PORT
+    value: "9200"

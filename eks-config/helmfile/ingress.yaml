@@ -1,0 +1,10 @@
+releases:
+  - name: istio-ingress
+    namespace: istio-ingress
+    chart: istio/gateway
+    version: 1.20.3
+    createNamespace: true
+    needs:
+      - istio-system/istiod
+    values:
+      - ../values/ingress-values.yaml

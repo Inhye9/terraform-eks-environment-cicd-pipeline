@@ -1,0 +1,8 @@
+releases:
+  - name: fluentd
+    namespace: logging
+    chart: fluent/fluentd
+    version: 0.5.0
+    values:
+      - ../values/fluentd-values.yaml
+    createNamespace: true

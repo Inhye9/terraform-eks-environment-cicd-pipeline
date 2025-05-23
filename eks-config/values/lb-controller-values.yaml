@@ -1,0 +1,19 @@
+clusterName: aim-test
+region: ap-northeast-2
+
+serviceAccount:
+  create: true
+  name: aws-load-balancer-controller
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+tolerations:
+  - key: "node-role.kubernetes.io/management"
+    operator: "Exists"
+    effect: "NoSchedule"
